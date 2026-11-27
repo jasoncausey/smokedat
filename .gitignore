@@ -1,0 +1,26 @@
+# Secrets and personal data
+**/*_private.pem
+config.json
+push_subscriptions.json
+logs/
+**/*.log
+
+# Python environment and build artifacts
+**/venv/
+**/.venv
+**/__pycache__/
+**/*.pyc
+
+# macOS
+**/.DS_Store
+**/__MACOS__
+
+# Misc
+**/*.bak
+**/~*
+**/.vscode
+
+# Packaging
+dist/
+build/
+**/*.egg-info/

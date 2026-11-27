@@ -1,0 +1,56 @@
+{
+  "units": "F",
+  "ntfy_enabled": false,
+  "ntfy_server": "https://ntfy.sh",
+  "ntfy_topic": "",
+  "pushover_enabled": false,
+  "pushover_user": "",
+  "pushover_token": "",
+  "pushover_emergency": false,
+  "presets": [
+    {
+      "id": "smoker",
+      "name": "Smoker 200-280",
+      "min": 93.33,
+      "max": 137.78
+    },
+    {
+      "id": "evmgr545",
+      "name": "Turkey Done",
+      "min": null,
+      "max": 73.89
+    },
+    {
+      "id": "fuge59i2",
+      "name": "Turkey Final ramp",
+      "min": 71.11,
+      "max": 73.89
+    },
+    {
+      "id": "thb7luz8",
+      "name": "Turkey Semifinal ramp",
+      "min": 68.33,
+      "max": 72.22
+    }
+  ],
+  "probes": [
+    {
+      "preset": null
+    },
+    {
+      "preset": null
+    },
+    {
+      "preset": null
+    },
+    {
+      "preset": null
+    },
+    {
+      "preset": null
+    },
+    {
+      "preset": null
+    }
+  ]
+}

@@ -1,0 +1,968 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1a1715">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SmokeDat">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+<link rel="icon" type="image/svg+xml" sizes="16x16 32x32" href="/favicon.svg?v=2">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=2">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png?v=2">
+<title>SmokeDat</title>
+<style>
+:root{
+  --bg:#f5f2ee;--card:#fffdfb;--fg:#1f1b18;--muted:#736b63;--line:#e4ddd4;--soft:#efe9e2;
+  --accent:#b8430f;--ok:#2f7d3a;--bad:#c0262d;--cold:#2563a8;
+  --c0:#e2572b;--c1:#2b7fb8;--c2:#d39b00;--c3:#3f9142;--c4:#8e4fd0;--c5:#8a6a5c;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#141210;--card:#1e1b18;--fg:#f2ede7;--muted:#a49b91;--line:#36302a;--soft:#2a2521;
+  --accent:#f08a4b;--ok:#5cc06a;--bad:#f06a6f;--cold:#6aa9ef;
+  --c0:#f2774d;--c1:#55a6de;--c2:#eab92f;--c3:#66b86a;--c4:#b07ff0;--c5:#b8968a;
+}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 16px calc(48px + env(safe-area-inset-bottom))}
+.sub{border-top:1px solid var(--soft);padding-top:12px;margin-top:12px}
+.sub h3{font-size:14px;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.pill{font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.pill.on{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+details summary{cursor:pointer;font-size:14px;font-weight:600}
+details[open] summary{margin-bottom:8px}
+.alerts .dl{display:block;font-size:11px;color:var(--muted)}
+.eta{color:var(--fg)}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:20px;margin:0;letter-spacing:-.2px}
+h2{font-size:15px;margin:0}
+.status{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--bad);flex:none}
+.dot.on{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:none;color:var(--muted);font:inherit;font-size:13px;padding:5px 10px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--fg);color:var(--bg)}
+.hdr-right{display:flex;align-items:center;gap:12px}
+
+.probes{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+.probe{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;position:relative;cursor:pointer;touch-action:manipulation;
+  border-top:4px solid var(--c);transition:border-color .2s}
+.probe .top{display:flex;gap:6px;align-items:baseline;font-size:13px;min-width:0}
+.probe .pn{font-weight:650;color:var(--c)}
+.probe .label{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.probe .temp{font-size:36px;font-weight:650;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1.15;margin:2px 0}
+.probe .temp small{font-size:16px;font-weight:500;color:var(--muted);margin-left:1px}
+.probe .meta{font-size:12px;color:var(--muted);min-height:4.4em}
+.probe .meta b{font-weight:600;color:var(--fg)}
+.probe select{width:100%;margin-top:6px}
+.probe.empty .temp,.probe.empty .meta{opacity:.4}
+.probe.hot{border-color:var(--bad);border-top-color:var(--c)}
+.probe.hot .temp{color:var(--bad)}
+.probe.cold{border-color:var(--cold);border-top-color:var(--c)}
+.probe.cold .temp{color:var(--cold)}
+.probe.sel{outline:2px solid var(--c);outline-offset:1px}
+
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:14px}
+.sec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{touch-action:manipulation;-webkit-user-select:none;user-select:none;border:1px solid var(--line);background:none;color:var(--fg);font:inherit;font-size:13px;border-radius:999px;padding:4px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.tab i{width:8px;height:8px;border-radius:50%;background:var(--c);display:inline-block}
+.tab[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tab:disabled{opacity:.35;cursor:default}
+.chart-wrap{position:relative;margin-top:8px}
+canvas{width:100%;height:300px;display:block;touch-action:pan-y}
+.tip{position:absolute;top:6px;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;
+  box-shadow:0 4px 14px rgba(0,0,0,.12);white-space:nowrap;display:none;font-variant-numeric:tabular-nums}
+.tip div{display:flex;gap:6px;align-items:center}
+.tip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.chart-note{font-size:12px;color:var(--muted);margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:26px}
+.chart-note b{font-weight:600;color:var(--fg)}
+.chart-note button{flex:none;font:inherit;font-size:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:7px;padding:3px 9px;cursor:pointer}
+.chart-note button[hidden]{display:none}
+.session{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--soft);margin-top:12px;padding-top:12px}
+.session .btns{display:flex;gap:8px}
+button.btn:disabled{opacity:.5;cursor:default}
+body.offline .probe .temp,body.offline .probe .meta{opacity:.35}
+
+input,select{font:inherit;font-size:14px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:6px 8px;min-width:0}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+button.btn{font:inherit;font-size:14px;border-radius:8px;padding:7px 14px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:disabled{opacity:.4;cursor:default}
+button.icon{border:0;background:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 8px;line-height:1}
+button.icon:hover{color:var(--bad)}
+
+.preset{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--soft)}
+.preset:first-child{border-top:0}
+.preset .used{grid-column:1/-1;font-size:12px;color:var(--muted);margin-top:-4px}
+.preset .hint{grid-column:1/-1;font-size:12px;color:var(--bad);margin-top:-4px}
+.preset .hint:empty{display:none}
+.preset-head{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;font-size:12px;color:var(--muted);padding-bottom:2px}
+.preset-head span:last-child{width:34px}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.msg{font-size:13px;color:var(--muted)}
+.msg.err{color:var(--bad)}
+.msg.ok{color:var(--ok)}
+
+.field{display:grid;gap:4px;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.field input{width:100%}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:10px}
+.help{font-size:13px;color:var(--muted);margin:0 0 10px}
+.help code{background:var(--soft);padding:1px 5px;border-radius:4px;font-size:12px;word-break:break-all}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:720px){.cols{grid-template-columns:1fr}}
+.alerts{list-style:none;margin:0;padding:0;font-size:13px}
+.alerts li{padding:6px 0;border-top:1px solid var(--soft);display:flex;gap:10px;align-items:flex-start}
+.alerts li > div{flex:1;min-width:0}
+.alerts .ok-btn{flex:none;font:inherit;font-size:13px;font-weight:650;border-radius:8px;padding:5px 14px;cursor:pointer;
+  background:var(--bad);border:1px solid var(--bad);color:#fff;touch-action:manipulation}
+.alerts .acked{flex:none;color:var(--ok);font-size:12px;text-align:right;white-space:nowrap;line-height:1.3}
+.alerts .acked b{font-size:16px;display:block}
+.alerts li.open b.ttl{color:var(--bad)}
+.alerts li:first-child{border-top:0}
+.alerts time{color:var(--muted);font-variant-numeric:tabular-nums;margin-right:6px}
+.empty-note{color:var(--muted);font-size:13px}
+.alarm{display:none;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;background:color-mix(in srgb,var(--bad) 14%,var(--card));
+  border:1px solid var(--bad);border-radius:12px;padding:10px 12px;margin-bottom:14px;font-size:14px}
+.alarm.on{display:flex}
+.alarm b{color:var(--bad)}
+.alarm button{background:var(--bad);border-color:var(--bad);color:#fff;font-weight:600}
+.wake{border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-size:13px;border-radius:8px;padding:5px 10px;cursor:pointer}
+.wake[aria-pressed=true]{color:var(--fg)}
+.wake[aria-pressed=true]::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px;vertical-align:1px}
+@media (max-width:420px){
+  .probe .temp{font-size:30px}
+  .preset,.preset-head{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+  .preset .name{grid-column:1/-1}
+  .preset-head .h-name{display:none}
+  canvas{height:240px}
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>SmokeDat</h1>
+    <div class="hdr-right">
+      <div class="status"><span class="dot" id="dot"></span><span id="status">Connecting…</span></div>
+      <button class="wake" id="wake" aria-pressed="false" title="Keep the screen on while this page is open">Screen on</button>
+      <div class="seg" id="units" role="group" aria-label="Units">
+        <button data-u="F" aria-pressed="false">°F</button><button data-u="C" aria-pressed="false">°C</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="alarm" id="alarm" role="alert">
+    <span id="alarmText"></span>
+    <button class="btn" id="ackBtn">Acknowledge</button>
+  </div>
+
+  <div class="probes" id="probes"></div>
+
+  <section id="chartsec">
+    <div class="sec-head">
+      <div class="tabs" id="tabs"></div>
+      <div class="seg" id="range" role="group" aria-label="Time range">
+        <button data-r="1800">30m</button><button data-r="3600">1h</button><button data-r="10800">3h</button><button data-r="43200">12h</button><button data-r="86400">24h</button><button data-r="session" title="Session start to latest reading">Session</button>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="chart"></canvas>
+      <div class="tip" id="tip"></div>
+    </div>
+    <div class="chart-note"><span id="chartnote"></span><button id="zoomOut" hidden>Zoom out</button></div>
+    <div class="session">
+      <span class="msg" id="sessionInfo"></span>
+      <div class="btns">
+        <button class="btn" id="exportBtn" title="Download this session's readings as a CSV file">Export CSV</button>
+        <button class="btn" id="resetBtn" title="Clear the chart and start a new log file">New session</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Saved alerts</h2></div>
+    <p class="help">Create an alert once, then pick it from the menu on any probe card. Changes save automatically when you leave a field. Leave low or high blank if you don't need it. Low alerts only turn on after the probe has reached that temperature, so a cold grill at startup won't set one off.</p>
+    <div class="preset-head"><span class="h-name">Name</span><span>Low</span><span>High</span><span></span></div>
+    <div id="presets"></div>
+    <div class="actions">
+      <button class="btn" id="addPreset">+ Add alert</button>
+      <span class="msg" id="presetMsg"></span>
+    </div>
+  </section>
+
+  <div class="cols">
+    <section>
+      <div class="sec-head"><h2>Phone notifications</h2></div>
+      <p class="help">Alerts go to every channel you turn on, and reach your phone anywhere it has internet. You don't need to be on Tailscale to receive them.</p>
+
+      <div class="sub" style="border-top:0;padding-top:0;margin-top:0">
+        <h3>This device <span class="pill" id="wpPill">off</span></h3>
+        <p class="help" id="wpHelp"></p>
+        <div class="actions" style="margin-top:0">
+          <button class="btn" id="wpEnable">Enable on this device</button>
+          <span class="msg" id="wpMsg"></span>
+        </div>
+      </div>
+
+      <div class="sub">
+        <h3>Pushover <span class="pill" id="poPill">off</span></h3>
+        <p class="help">The only option that can sound <b>through silent mode</b>. In the Pushover iPhone app, go to Settings and turn on Critical Alerts. Create an app token at pushover.net/apps.</p>
+        <label class="check"><input type="checkbox" id="poEnabled"> Send alerts to Pushover</label>
+        <label class="field">User key<input id="poUser" type="password" autocomplete="off" spellcheck="false"></label>
+        <label class="field">App token<input id="poToken" type="password" autocomplete="off" spellcheck="false"></label>
+        <label class="check"><input type="checkbox" id="poEmergency"> Temperature alerts repeat every minute until acknowledged</label>
+      </div>
+
+      <details class="sub" id="ntfyBox">
+        <summary>ntfy <span class="pill" id="nPill">off</span></summary>
+        <p class="help">The ntfy iOS app currently has notification-sound bugs, so use it as a backup. In the app, subscribe to the topic below. Anyone who knows the topic can read your alerts, so keep it random.</p>
+        <label class="check"><input type="checkbox" id="nEnabled"> Send alerts to ntfy</label>
+        <label class="field">Topic<input id="nTopic" autocomplete="off" spellcheck="false"></label>
+        <label class="field">Server<input id="nServer" autocomplete="off" spellcheck="false"></label>
+      </details>
+
+      <div class="actions">
+        <button class="btn primary" id="saveNotify">Save</button>
+        <button class="btn" id="testNotify">Send test to all</button>
+        <span class="msg" id="notifyMsg"></span>
+      </div>
+    </section>
+    <section>
+      <div class="sec-head"><h2>Recent alerts</h2></div>
+      <ul class="alerts" id="alerts"></ul>
+    </section>
+  </div>
+</main>
+
+<script>
+const N = 6;
+const GAP = 35;            // seconds; larger gaps in history break the line
+let cfg = null, temps = Array(N).fill(null), hist = [], lastT = 0;
+let range = 10800, hoverX = null;
+// What the time axis shows: 'live' = the last `range` seconds, 'session' = first to last logged reading,
+// 'fixed' = a span picked by dragging on the chart. view.y = [low, high] °C when the temperature axis is
+// zoomed (otherwise it fits the data). zoomStack holds the views to step back to.
+let view = {mode: 'live'}, zoomStack = [], drag = null;
+const MIN_ZOOM = 120;      // seconds; narrowest span a drag can zoom to
+const MIN_ZOOM_Y = 2;      // °C; narrowest temperature band a drag can zoom to
+const DRAG_X = 8, DRAG_Y = 24;  // px a drag must cover to zoom that axis (sideways drags wobble a bit)
+// Probes drawn on the chart. Tap toggles one; double-tap solos it (double-tap the solo probe again to show all).
+let shown = new Set([...Array(N).keys()]);
+try { const s = JSON.parse(localStorage.getItem('bbq.shown')); if (Array.isArray(s)) shown = new Set(s.filter(i => i >= 0 && i < N)); } catch {}
+const DBL = 350;           // ms between taps that count as a double-tap
+let lastTap = {i: -1, at: 0, before: null};
+let draft = [], formDirty = false, presetSig = '', lastOk = 0, server = {};
+const cards = [];
+
+const $ = s => document.querySelector(s);
+const color = i => getComputedStyle(document.documentElement).getPropertyValue('--c' + i).trim();
+const isF = () => cfg && cfg.units === 'F';
+const toU = c => c == null ? null : (isF() ? c * 9 / 5 + 32 : c);
+const fromU = v => isF() ? (v - 32) * 5 / 9 : v;
+const deg = c => c == null ? '--' : Math.round(toU(c)) + '°';
+const presetOf = i => cfg.presets.find(p => p.id === cfg.probes[i].preset) || null;
+const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const hhmm = t => new Date(t * 1000).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+
+// Every request has a timeout. Without one, a request to a bridge that stopped (or a Mac that went to
+// sleep) can hang forever, and the page goes on showing the last "Live" status.
+async function fetchT(path, opts = {}, timeout = 6000) {
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeout);
+  try { return await fetch(path, {cache: 'no-store', ...opts, signal: ctl.signal}); }
+  catch (e) { throw e.name === 'AbortError' ? new Error('timed out') : e; }
+  finally { clearTimeout(timer); }
+}
+async function api(path, body, timeout) {
+  const r = await fetchT(path, body === undefined ? {} : {
+    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}, timeout);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || j.message || ('HTTP ' + r.status));
+  return j;
+}
+
+/* ---------------- probe cards ---------------- */
+function buildCards() {
+  const wrap = $('#probes');
+  for (let i = 0; i < N; i++) {
+    const c = document.createElement('div');
+    c.className = 'probe';
+    c.style.setProperty('--c', `var(--c${i})`);
+    c.innerHTML = `<div class="top"><span class="pn">P${i + 1}</span><span class="label"></span></div>
+      <div class="temp">--</div><div class="meta"></div>
+      <select aria-label="Alert for probe ${i + 1}"></select>`;
+    c.addEventListener('click', e => {
+      if (e.target.tagName === 'SELECT') return;
+      tapProbe(i);
+      $('#chartsec').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    });
+    c.querySelector('select').addEventListener('change', e => assign(i, e.target.value || null));
+    wrap.append(c);
+    cards.push(c);
+  }
+}
+
+function predText(i, p) {
+  // server-side time-to-goal model (heating-curve fit over the last hour)
+  const pr = (server.predictions || [])[i];
+  if (!pr || !p || p.max == null) return '';
+  const rate = pr.rate != null ? `${pr.rate >= 0 ? '+' : ''}${(isF() ? pr.rate * 9 / 5 : pr.rate).toFixed(1)}°/min` : '';
+  if (pr.state === 'reached') return '<br><span class="eta">Goal reached</span>';
+  if (pr.state === 'rising') {
+    const at = new Date(Date.now() + pr.eta * 1000).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+    return `<br><span class="eta">~${fmtDur(pr.eta)} to go · ${at}</span><br>${rate}`;
+  }
+  if (pr.state === 'stalled') return `<br><span class="eta">Stalled${pr.plateau != null ? `, leveling off near ${deg(pr.plateau)}` : ''}</span>`;
+  if (pr.state === 'falling') return `<br><span class="eta">Falling</span> ${rate}`;
+  return '';
+}
+
+function fmtDur(s) {
+  const m = Math.round(s / 60);
+  return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`;
+}
+
+function alertText(p) {
+  if (!p) return 'No alert';
+  if (p.min != null && p.max != null) return `Alert outside <b>${deg(p.min)}–${deg(p.max)}</b>`;
+  if (p.max != null) return `Alert at <b>${deg(p.max)}</b>`;
+  return `Alert below <b>${deg(p.min)}</b>`;
+}
+
+function syncOptions() {
+  const sig = JSON.stringify([cfg.presets, cfg.units]);
+  if (sig === presetSig) return;
+  presetSig = sig;
+  const opts = '<option value="">No alert</option>' + cfg.presets.map(p => {
+    const r = p.min != null && p.max != null ? `${deg(p.min)}–${deg(p.max)}` : p.max != null ? `≥${deg(p.max)}` : `<${deg(p.min)}`;
+    return `<option value="${esc(p.id)}">${esc(p.name)} (${r})</option>`;
+  }).join('');
+  cards.forEach(c => { c.querySelector('select').innerHTML = opts; });
+}
+
+function updateCards() {
+  syncOptions();
+  const u = isF() ? '°F' : '°C';
+  for (let i = 0; i < N; i++) {
+    const c = cards[i], t = temps[i], p = presetOf(i);
+    c.classList.toggle('empty', t == null);
+    c.classList.toggle('hot', !!(p && p.max != null && t != null && t >= p.max));
+    c.classList.toggle('cold', !!(p && p.min != null && t != null && t < p.min && hist.some(h => h[1][i] != null && h[1][i] >= p.min)));
+    c.querySelector('.label').textContent = p ? p.name : (t == null ? 'Not plugged in' : '');
+    c.querySelector('.temp').innerHTML = t == null ? '--' : `${Math.round(toU(t))}<small>${u}</small>`;
+    c.querySelector('.meta').innerHTML = alertText(p) + (t != null ? predText(i, p) : '');
+    const sel = c.querySelector('select');
+    if (document.activeElement !== sel) sel.value = cfg.probes[i].preset || '';
+  }
+  const live = temps.map((t, i) => t == null ? null : `P${i + 1} ${deg(t)}`).filter(Boolean);
+  document.title = live.length ? live.join(' · ') + ' — SmokeDat' : 'SmokeDat';
+}
+
+async function assign(i, id) {
+  const probes = cfg.probes.map((p, j) => j === i ? {preset: id} : p);
+  try { cfg = await api('api/config', {probes}); updateCards(); draw(); }
+  catch (e) { alert('Could not assign alert: ' + e.message); updateCards(); }
+}
+
+/* ---------------- chart ---------------- */
+const has = i => temps[i] != null || hist.some(h => h[1][i] != null);
+const allShown = () => [...Array(N).keys()].every(i => shown.has(i) || !has(i));
+function setShown(s) {
+  shown = s;
+  try { localStorage.setItem('bbq.shown', JSON.stringify([...shown])); } catch {}
+  renderTabs(); draw();
+}
+function tapProbe(i) {
+  const now = Date.now();
+  if (lastTap.i === i && now - lastTap.at < DBL) {
+    // double-tap: solo this probe, or go back to all if it was already the solo probe
+    const b = lastTap.before;
+    lastTap = {i: -1, at: 0, before: null};
+    const wasSolo = b.size === 1 && b.has(i);
+    setShown(wasSolo ? new Set([...Array(N).keys()]) : new Set([i]));
+    return;
+  }
+  lastTap = {i, at: now, before: new Set(shown)};
+  const s = new Set(shown);
+  s.has(i) ? s.delete(i) : s.add(i);
+  setShown(s);
+}
+function renderTabs() {
+  const tabs = $('#tabs');
+  const all = allShown();
+  let html = `<button class="tab" data-v="all" aria-pressed="${all}">All probes</button>`;
+  for (let i = 0; i < N; i++) {
+    const p = presetOf(i);
+    html += `<button class="tab" data-v="${i}" style="--c:var(--c${i})" aria-pressed="${shown.has(i) && has(i)}" ${has(i) ? '' : 'disabled'}><i></i>P${i + 1}${p ? ' ' + esc(p.name) : ''}</button>`;
+  }
+  if (tabs.dataset.html !== html) { tabs.innerHTML = html; tabs.dataset.html = html; }
+  cards.forEach((c, i) => c.classList.toggle('sel', !all && shown.has(i) && has(i)));
+}
+$('#tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab'); if (!b || b.disabled) return;
+  if (b.dataset.v === 'all') setShown(new Set([...Array(N).keys()]));
+  else tapProbe(+b.dataset.v);
+});
+$('#range').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.r === 'session') view = {mode: 'session'};
+  else { range = +b.dataset.r; view = {mode: 'live'}; }
+  zoomStack = []; renderRange(); draw();
+});
+function renderRange() {
+  setPressed('#range', 'r', view.mode === 'live' ? String(range) : view.mode === 'session' ? 'session' : '');
+  $('#zoomOut').hidden = view.mode !== 'fixed' && !view.y;
+}
+function viewSpan() {
+  const now = Date.now() / 1000;
+  if (view.mode === 'fixed') return [view.t0, view.t1];
+  if (view.mode === 'session' && hist.length) {
+    // first logged reading to last logged reading (hist only holds this session's rows)
+    const first = hist[0][0], last = hist[hist.length - 1][0];
+    return [first, Math.max(last, first + MIN_ZOOM)];
+  }
+  return [now - range, now];
+}
+// xr = [t0, t1] or null to keep the time axis; yr = [low, high] °C or null to keep the temperature axis.
+function zoomTo(xr, yr) {
+  const next = {...view};
+  if (xr) {
+    let [a, b] = xr;
+    if (b - a < MIN_ZOOM) { const m = (a + b) / 2; a = m - MIN_ZOOM / 2; b = m + MIN_ZOOM / 2; }
+    Object.assign(next, {mode: 'fixed', t0: a, t1: b});
+  }
+  if (yr) {
+    let [a, b] = yr;
+    if (b - a < MIN_ZOOM_Y) { const m = (a + b) / 2; a = m - MIN_ZOOM_Y / 2; b = m + MIN_ZOOM_Y / 2; }
+    next.y = [a, b];
+  }
+  zoomStack.push(view);
+  view = next;
+  renderRange(); draw();
+}
+$('#zoomOut').addEventListener('click', () => { view = zoomStack.pop() || {mode: 'live'}; renderRange(); draw(); });
+function setPressed(sel, key, val) {
+  document.querySelectorAll(sel + ' button').forEach(b => b.setAttribute('aria-pressed', b.dataset[key] === val));
+}
+
+function niceStep(x) {
+  const p = 10 ** Math.floor(Math.log10(x));
+  for (const m of [1, 2, 5, 10]) if (m * p >= x) return m * p;
+}
+
+let geom = null;
+const TICK_STEPS = [60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 14400, 21600, 43200, 86400];
+function draw() {
+  if (!cfg) return;
+  const cv = $('#chart'), dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const css = getComputedStyle(document.documentElement);
+  const cMuted = css.getPropertyValue('--muted').trim(), cLine = css.getPropertyValue('--line').trim();
+  const [t0, t1] = viewSpan();
+  const pts = hist.filter(h => h[0] >= t0 - GAP && h[0] <= t1 + GAP);  // a little past each edge so lines reach it
+  const inView = pts.filter(h => h[0] >= t0 && h[0] <= t1);
+  const idx = [...shown].filter(has).sort((a, b) => a - b);
+  const one = idx.length === 1 ? idx[0] : null;
+  const single = one != null ? presetOf(one) : null;
+
+  let lo = Infinity, hi = -Infinity;
+  for (const p of inView) for (const i of idx) { const v = p[1][i]; if (v != null) { const u = toU(v); lo = Math.min(lo, u); hi = Math.max(hi, u); } }
+  if (!isFinite(lo)) {
+    geom = null;
+    g.fillStyle = cMuted; g.font = '14px system-ui'; g.textAlign = 'center';
+    g.fillText(idx.length ? 'No readings in this time range yet' : 'No probes selected', W / 2, H / 2);
+    $('#tip').style.display = 'none';
+    renderNote(t0, t1, null, []);
+    return;
+  }
+  let step;
+  if (view.y) {  // zoomed temperature axis: exactly the band that was picked
+    lo = toU(view.y[0]); hi = toU(view.y[1]);
+    step = niceStep((hi - lo) / 7);
+  } else {
+    if (single) for (const v of [single.min, single.max]) if (v != null) { lo = Math.min(lo, toU(v)); hi = Math.max(hi, toU(v)); }
+    if (hi - lo < 10) { const m = (hi + lo) / 2; lo = m - 5; hi = m + 5; }
+    step = niceStep((hi - lo) / 5);
+    lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  }
+
+  const L = 42, R = 10, T = 10, B = 24;
+  const x = t => L + (t - t0) / (t1 - t0) * (W - L - R);
+  const y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+
+  g.font = '11px system-ui'; g.lineWidth = 1;
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  const yDec = step < 1 ? 1 : 0;
+  for (let v = Math.ceil(lo / step - 1e-9) * step; v <= hi + 1e-9; v += step) {
+    g.strokeStyle = cLine; g.beginPath(); g.moveTo(L, Math.round(y(v)) + .5); g.lineTo(W - R, Math.round(y(v)) + .5); g.stroke();
+    g.fillStyle = cMuted; g.fillText(v.toFixed(yDec) + '°', L - 6, y(v));
+  }
+  const maxTicks = Math.max(2, Math.floor((W - L - R) / 70));
+  const tstep = TICK_STEPS.find(s => (t1 - t0) / s <= maxTicks) || 86400;
+  const tzOff = new Date().getTimezoneOffset() * 60;
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  for (let t = Math.ceil((t0 - tzOff) / tstep) * tstep + tzOff; t <= t1; t += tstep) {
+    if (x(t) < L + 14 || x(t) > W - 16) continue;
+    g.fillStyle = cMuted; g.fillText(hhmm(t), x(t), H - B + 7);
+  }
+
+  g.save();
+  g.beginPath(); g.rect(L, T, W - L - R, H - T - B); g.clip();
+  if (single) {
+    const c = color(one);
+    if (single.min != null && single.max != null) {
+      g.fillStyle = c + '18'; g.fillRect(L, y(toU(single.max)), W - L - R, y(toU(single.min)) - y(toU(single.max)));
+    }
+    g.setLineDash([5, 4]); g.strokeStyle = c; g.lineWidth = 1.2;
+    g.textAlign = 'left'; g.textBaseline = 'bottom'; g.fillStyle = c;
+    for (const [v, lab] of [[single.max, 'high'], [single.min, 'low']]) if (v != null) {
+      g.beginPath(); g.moveTo(L, y(toU(v))); g.lineTo(W - R, y(toU(v))); g.stroke();
+      g.fillText(`${lab} ${deg(v)}`, L + 4, y(toU(v)) - 2);
+    }
+    g.setLineDash([]);
+  }
+
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  for (const i of idx) {
+    g.strokeStyle = color(i); g.lineWidth = one != null ? 2.5 : 2;
+    g.beginPath();
+    let pen = false, prev = null;
+    for (const p of pts) {
+      const v = p[1][i];
+      if (v == null || (prev && p[0] - prev > GAP)) pen = false;
+      if (v != null) { pen ? g.lineTo(x(p[0]), y(toU(v))) : g.moveTo(x(p[0]), y(toU(v))); pen = true; }
+      prev = p[0];
+    }
+    g.stroke();
+  }
+
+  const sel = drag && dragAxes(drag);
+  if (sel && (sel.x || sel.y)) {  // selection while dragging: a band for one axis, a box for both
+    const a = sel.x ? Math.min(drag.x0, drag.x1) : L, b = sel.x ? Math.max(drag.x0, drag.x1) : W - R;
+    const c = sel.y ? Math.min(drag.y0, drag.y1) : T, d = sel.y ? Math.max(drag.y0, drag.y1) : H - B;
+    g.globalAlpha = .12; g.fillStyle = css.getPropertyValue('--fg').trim(); g.fillRect(a, c, b - a, d - c);
+    g.globalAlpha = 1;
+  }
+  g.restore();
+
+  geom = {L, R, W, x, y, t0, t1, lo, hi, pts: inView, idx, top: T, bottom: H - B};
+  if (hoverX != null) drawHover(g);
+  else $('#tip').style.display = 'none';
+  renderNote(t0, t1, one, inView);
+}
+
+function renderNote(t0, t1, one, inView) {
+  renderRange();
+  let span = '';
+  if (view.mode !== 'live') {
+    const day = new Date(t0 * 1000).toDateString() !== new Date(t1 * 1000).toDateString();
+    const fmt = t => (day ? new Date(t * 1000).toLocaleDateString([], {weekday: 'short'}) + ' ' : '') + hhmm(t);
+    span = `<b>${view.mode === 'session' ? 'Session ' : ''}${fmt(t0)} – ${fmt(t1)}</b>`;
+  }
+  if (view.y) span += (span ? ', ' : '') + `<b>${deg(view.y[0])} – ${deg(view.y[1])}</b>`;
+  if (span) span += ' · ';
+  let text;
+  if (one == null) text = view.mode === 'fixed' || view.y ? 'Drag again to zoom further.'
+    : 'Tap a probe to show or hide it. Double-tap to show it alone. Drag sideways to zoom time, or draw a box to zoom both axes.';
+  else {
+    const vals = inView.map(p => p[1][one]).filter(v => v != null);
+    text = vals.length ? `P${one + 1} here: low ${deg(Math.min(...vals))}, high ${deg(Math.max(...vals))}` : '';
+  }
+  $('#chartnote').innerHTML = span + text;
+}
+
+function drawHover(g) {
+  const {L, W, R, x, y, t0, t1, pts, idx} = geom;
+  if (hoverX < L || hoverX > W - R || !pts.length) { $('#tip').style.display = 'none'; return; }
+  const t = t0 + (hoverX - L) / (W - L - R) * (t1 - t0);
+  let best = pts[0];
+  for (const p of pts) if (Math.abs(p[0] - t) < Math.abs(best[0] - t)) best = p;
+  const css = getComputedStyle(document.documentElement);
+  g.strokeStyle = css.getPropertyValue('--muted').trim(); g.lineWidth = 1; g.setLineDash([2, 3]);
+  g.beginPath(); g.moveTo(x(best[0]), geom.top); g.lineTo(x(best[0]), geom.bottom); g.stroke(); g.setLineDash([]);
+  let rows = '';
+  for (const i of idx) {
+    const v = best[1][i]; if (v == null) continue;
+    const py = y(toU(v));
+    if (py >= geom.top && py <= geom.bottom) { g.fillStyle = color(i); g.beginPath(); g.arc(x(best[0]), py, 3.5, 0, 7); g.fill(); }
+    const p = presetOf(i);
+    rows += `<div style="--c:var(--c${i})"><i></i>P${i + 1}${p ? ' ' + esc(p.name) : ''} <b>${deg(v)}</b></div>`;
+  }
+  const tip = $('#tip');
+  if (!rows) { tip.style.display = 'none'; return; }
+  tip.innerHTML = `<div style="color:var(--muted)">${hhmm(best[0])}</div>` + rows;
+  tip.style.display = 'block';
+  const px = x(best[0]), tw = tip.offsetWidth;
+  tip.style.left = Math.max(0, Math.min(W - tw, px > W / 2 ? px - tw - 12 : px + 12)) + 'px';
+}
+
+// Drag on the chart to zoom: sideways = time, up/down = temperature, a box = both. On touch screens a
+// vertical swipe scrolls the page, so draw a box (start sideways) to zoom temperature there.
+// A tap or click without dragging just shows the readings at that time.
+const cv = $('#chart');
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const xToT = px => { const {L, R, W, t0, t1} = geom; return t0 + clamp01((px - L) / (W - L - R)) * (t1 - t0); };
+const yToC = py => { const {top, bottom, lo, hi} = geom; return fromU(hi - clamp01((py - top) / (bottom - top)) * (hi - lo)); };
+const dragAxes = d => ({x: Math.abs(d.x1 - d.x0) > DRAG_X, y: Math.abs(d.y1 - d.y0) > DRAG_Y});
+// A box across (nearly) the whole width only zooms temperature, so a live or session view keeps following.
+const fullWidth = d => geom && Math.abs(d.x1 - d.x0) >= 0.97 * (geom.W - geom.L - geom.R);
+cv.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  drag = {x0: e.offsetX, x1: e.offsetX, y0: e.offsetY, y1: e.offsetY};
+  try { cv.setPointerCapture(e.pointerId); } catch {}
+  hoverX = e.offsetX; draw();
+});
+cv.addEventListener('pointermove', e => {
+  hoverX = e.offsetX;
+  if (drag) { drag.x1 = e.offsetX; drag.y1 = e.offsetY; }
+  draw();
+});
+cv.addEventListener('pointerup', () => {
+  const d = drag; drag = null;
+  const ax = d && geom ? dragAxes(d) : {};
+  if (ax.x || ax.y) {
+    hoverX = null;
+    if (ax.y && fullWidth(d)) ax.x = false;
+    zoomTo(ax.x ? [xToT(Math.min(d.x0, d.x1)), xToT(Math.max(d.x0, d.x1))] : null,
+           ax.y ? [yToC(Math.max(d.y0, d.y1)), yToC(Math.min(d.y0, d.y1))] : null);
+  } else draw();
+});
+cv.addEventListener('pointercancel', () => { drag = null; hoverX = null; draw(); });
+// Touch: keep the tapped readout visible until the next tap elsewhere (pointerleave fires right after lifting).
+cv.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch' && !drag) { hoverX = null; draw(); } });
+document.addEventListener('pointerdown', e => { if (e.target !== cv && hoverX != null) { hoverX = null; draw(); } });
+window.addEventListener('resize', draw);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+
+/* ---------------- saved alerts editor ---------------- */
+function renderPresets() {
+  draft = cfg.presets.map(p => ({...p, min: p.min == null ? '' : Math.round(toU(p.min)), max: p.max == null ? '' : Math.round(toU(p.max))}));
+  drawPresetRows();
+  setDirty(false);
+}
+function drawPresetRows() {
+  const box = $('#presets');
+  if (!draft.length) { box.innerHTML = '<p class="empty-note">No saved alerts yet.</p>'; return; }
+  const u = isF() ? '°F' : '°C';
+  box.innerHTML = draft.map((p, k) => {
+    const users = cfg.probes.map((q, i) => q.preset === p.id ? 'P' + (i + 1) : null).filter(Boolean);
+    return `<div class="preset" data-k="${k}">
+      <input class="name" data-f="name" value="${esc(p.name)}" placeholder="Name, e.g. Brisket" maxlength="40">
+      <input data-f="min" type="number" inputmode="decimal" value="${p.min}" placeholder="Low ${u}">
+      <input data-f="max" type="number" inputmode="decimal" value="${p.max}" placeholder="High ${u}">
+      <button class="icon" data-del="${k}" title="Delete alert" aria-label="Delete ${esc(p.name)}">✕</button>
+      ${users.length ? `<div class="used">Used by ${users.join(', ')}</div>` : ''}
+      <div class="hint"></div>
+    </div>`;
+  }).join('');
+}
+function setDirty(d) { formDirty = d; }
+
+// Auto-save: complete rows are saved when you leave a field (or press Enter).
+// Incomplete rows stay on this page with a hint until they're finished.
+function rowStatus(p) {
+  const name = String(p.name).trim(), lo = p.min === '' ? null : +p.min, hi = p.max === '' ? null : +p.max;
+  if (!name && lo == null && hi == null) return 'empty';
+  if (!name) return 'Add a name to save this alert';
+  if (lo == null && hi == null) return 'Add a low or high temperature to save this alert';
+  if ((lo != null && !isFinite(lo)) || (hi != null && !isFinite(hi))) return 'Temperatures must be numbers';
+  if (lo != null && hi != null && lo >= hi) return 'Low must be below high (not saved)';
+  return 'ok';
+}
+let saveChain = Promise.resolve();
+function autosave() { saveChain = saveChain.then(doSave, doSave); }
+async function doSave() {
+  const toC = v => v === '' || v == null ? null : Math.round(fromU(+v) * 100) / 100;
+  const statuses = draft.map(rowStatus);
+  document.querySelectorAll('#presets .preset').forEach(row => {
+    const s = statuses[+row.dataset.k];
+    row.querySelector('.hint').textContent = s === 'ok' || s === 'empty' ? '' : s;
+  });
+  // Rows mid-edit or invalid keep their last saved version (so probe assignments survive).
+  const presets = draft.map((p, k) => statuses[k] === 'ok'
+      ? {id: p.id, name: String(p.name).trim(), min: toC(p.min), max: toC(p.max)}
+      : cfg.presets.find(s => s.id === p.id)).filter(Boolean);
+  const waiting = statuses.filter(s => s !== 'ok' && s !== 'empty').length;
+  setDirty(statuses.some(s => s !== 'ok'));
+  if (JSON.stringify(presets) === JSON.stringify(cfg.presets)) {
+    if (waiting) msg('#presetMsg', `${waiting} alert${waiting > 1 ? 's' : ''} not saved yet`, 'err');
+    return;
+  }
+  msg('#presetMsg', 'Saving…');
+  try {
+    cfg = await api('api/config', {presets});
+    presetSig = ''; updateCards(); renderTabs(); draw();
+    msg('#presetMsg', waiting ? `Saved · ${waiting} alert${waiting > 1 ? 's' : ''} not finished yet` : 'All changes saved',
+        waiting ? 'err' : 'ok');
+  } catch (e) { msg('#presetMsg', 'Not saved: ' + e.message, 'err'); setDirty(true); }
+}
+$('#presets').addEventListener('input', e => {
+  const row = e.target.closest('.preset'); if (!row) return;
+  draft[+row.dataset.k][e.target.dataset.f] = e.target.value;
+  setDirty(true);
+});
+$('#presets').addEventListener('change', e => { if (e.target.closest('.preset')) autosave(); });
+$('#presets').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.target.blur(); });
+$('#presets').addEventListener('click', e => {
+  const k = e.target.dataset.del; if (k === undefined) return;
+  const p = draft[+k];
+  const users = cfg.probes.filter(q => q.preset === p.id).length;
+  if (users && !confirm(`"${p.name}" is assigned to ${users} probe(s). Delete it and remove it from them?`)) return;
+  draft.splice(+k, 1); drawPresetRows(); autosave();
+});
+$('#addPreset').addEventListener('click', () => {
+  draft.push({id: Math.random().toString(36).slice(2, 10), name: '', min: '', max: ''});
+  drawPresetRows(); setDirty(true);
+  $('#presets .preset:last-child .name').focus();
+});
+function msg(sel, text, cls) { const m = $(sel); m.textContent = text; m.className = 'msg ' + (cls || ''); }
+
+/* ---------------- units + notifications ---------------- */
+$('#units').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b || b.dataset.u === cfg.units) return;
+  if (formDirty && !confirm('Discard unsaved alert edits?')) return;
+  try { cfg = await api('api/config', {units: b.dataset.u}); } catch (err) { alert(err.message); return; }
+  setPressed('#units', 'u', cfg.units); renderPresets(); presetSig = ''; updateCards(); renderTabs(); draw();
+});
+function pill(sel, on, text) { const p = $(sel); p.textContent = text || (on ? 'on' : 'off'); p.className = 'pill' + (on ? ' on' : ''); }
+function renderNotify() {
+  $('#nEnabled').checked = cfg.ntfy_enabled;
+  $('#nTopic').value = cfg.ntfy_topic;
+  $('#nServer').value = cfg.ntfy_server;
+  $('#poEnabled').checked = cfg.pushover_enabled;
+  $('#poEmergency').checked = cfg.pushover_emergency;
+  $('#poUser').value = ''; $('#poToken').value = '';
+  $('#poUser').placeholder = $('#poToken').placeholder = cfg.pushover_configured ? 'Saved (leave blank to keep)' : '';
+  pill('#poPill', cfg.pushover_enabled);
+  pill('#nPill', cfg.ntfy_enabled);
+}
+$('#saveNotify').addEventListener('click', async () => {
+  try {
+    cfg = await api('api/config', {
+      ntfy_enabled: $('#nEnabled').checked, ntfy_topic: $('#nTopic').value, ntfy_server: $('#nServer').value,
+      pushover_enabled: $('#poEnabled').checked, pushover_emergency: $('#poEmergency').checked,
+      pushover_user: $('#poUser').value, pushover_token: $('#poToken').value,
+    });
+    renderNotify(); msg('#notifyMsg', 'Saved', 'ok');
+  } catch (e) { msg('#notifyMsg', e.message, 'err'); }
+});
+$('#testNotify').addEventListener('click', async () => {
+  msg('#notifyMsg', 'Sending…');
+  try {
+    const r = await api('api/test', {}, 20000);
+    msg('#notifyMsg', Object.entries(r.results).map(([k, v]) => `${k}: ${v}`).join(' · '),
+        Object.values(r.results).some(v => v.startsWith('error')) ? 'err' : 'ok');
+  } catch (e) { msg('#notifyMsg', 'Failed: ' + e.message, 'err'); }
+});
+
+/* ---------------- web push (PWA) ---------------- */
+const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let swReg = null;
+function b64ToBytes(s) {
+  const b = atob((s + '='.repeat((4 - s.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(b, c => c.charCodeAt(0));
+}
+async function renderWebPush() {
+  const help = $('#wpHelp'), btn = $('#wpEnable');
+  if (!window.isSecureContext) {
+    help.innerHTML = 'Web push needs HTTPS. Open this page through its <code>https://….ts.net</code> address (Tailscale Serve).';
+    btn.style.display = 'none'; pill('#wpPill', false, 'needs HTTPS'); return;
+  }
+  if (isIOS && !standalone) {
+    help.innerHTML = 'On iPhone: tap <b>Share</b> → <b>Add to Home Screen</b>, open <b>SmokeDat</b> from your home screen, then tap Enable there. iOS only allows web push for home-screen apps.';
+    btn.style.display = 'none'; pill('#wpPill', false, 'add to home screen'); return;
+  }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    help.textContent = "This browser doesn't support web push."; btn.style.display = 'none'; pill('#wpPill', false, 'unsupported'); return;
+  }
+  const sub = swReg && await swReg.pushManager.getSubscription();
+  btn.style.display = '';
+  btn.textContent = sub ? 'Disable on this device' : 'Enable on this device';
+  pill('#wpPill', !!sub);
+  help.innerHTML = sub
+    ? 'This device receives alerts. They follow your ring/silent switch and Focus settings. Use Pushover if you need alerts that sound through silent mode.'
+    : 'Get alerts on this device as a normal notification, with no extra app needed.';
+}
+$('#wpEnable').addEventListener('click', async () => {
+  try {
+    const existing = await swReg.pushManager.getSubscription();
+    if (existing) {
+      await api('api/push/unsubscribe', {endpoint: existing.endpoint});
+      await existing.unsubscribe();
+      msg('#wpMsg', 'Disabled', '');
+    } else {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { msg('#wpMsg', 'Notifications were not allowed. Change this in Settings → Notifications.', 'err'); return; }
+      const {key} = await api('api/push/key');
+      const sub = await swReg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64ToBytes(key)});
+      await api('api/push/subscribe', {subscription: sub.toJSON()});
+      msg('#wpMsg', 'Enabled. Tap "Send test to all" below to check.', 'ok');
+    }
+  } catch (e) { msg('#wpMsg', 'Failed: ' + e.message, 'err'); }
+  renderWebPush();
+});
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register('/sw.js').then(r => { swReg = r; return navigator.serviceWorker.ready; })
+    .then(r => { swReg = r; renderWebPush(); }).catch(e => { msg('#wpMsg', 'Service worker failed: ' + e.message, 'err'); renderWebPush(); });
+} else renderWebPush();
+
+function renderAlerts(list) {
+  $('#alerts').innerHTML = list.length
+    ? list.map(a => {
+        const d = a.delivery && Object.keys(a.delivery).length
+          ? Object.entries(a.delivery).map(([k, v]) => `${k}: ${v}`).join(' · ') : 'not sent: no channels on';
+        const side = !a.alarm ? ''
+          : a.acked ? `<span class="acked" title="Acknowledged from ${esc(a.acked.from)}"><b>✓</b>${hhmm(a.acked.t)}</span>`
+          : `<button class="ok-btn" data-ack="${a.id}">OK</button>`;
+        return `<li class="${a.alarm && !a.acked ? 'open' : ''}"><div><time>${hhmm(a.t)}</time><b class="ttl">${esc(a.title)}</b> · ${esc(a.message)}<span class="dl">${esc(d)}${a.acked ? ' · acknowledged from ' + esc(a.acked.from) : ''}</span></div>${side}</li>`;
+      }).join('')
+    : '<li class="empty-note">No alerts yet.</li>';
+}
+
+/* ---------------- alarms ---------------- */
+function renderAlarm(list) {
+  const box = $('#alarm');
+  box.classList.toggle('on', list.length > 0);
+  if (!list.length) return;
+  const names = list.map(a => esc(a.title)).join(' · ');
+  $('#alarmText').innerHTML = `<b>${list.length > 1 ? list.length + ' alarms' : 'Alarm'}</b> ${names}`;
+}
+async function ack() {
+  try { await api('api/ack', {from: 'the web app'}, 20000); renderAlarm([]); poll(true); }
+  catch (e) { alert('Could not acknowledge: ' + e.message); }
+}
+$('#ackBtn').addEventListener('click', ack);
+$('#alerts').addEventListener('click', e => { if (e.target.closest('.ok-btn')) ack(); });
+
+/* ---------------- keep screen awake ---------------- */
+// Screen Wake Lock: iOS releases it whenever the app is hidden, so re-request on return.
+let wantWake = true, wakeLock = null;
+try { wantWake = localStorage.getItem('bbq.wake') !== '0'; } catch {}
+async function syncWake() {
+  const btn = $('#wake');
+  if (!('wakeLock' in navigator)) { btn.style.display = 'none'; return; }
+  if (wantWake && !wakeLock && document.visibilityState === 'visible') {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; renderWake(); });
+    } catch { wakeLock = null; }  // may need a tap first; retried on the next one
+  } else if (!wantWake && wakeLock) {
+    await wakeLock.release().catch(() => {}); wakeLock = null;
+  }
+  renderWake();
+}
+function renderWake() {
+  const btn = $('#wake');
+  btn.setAttribute('aria-pressed', String(!!wakeLock));
+  btn.textContent = wakeLock ? 'Screen on' : (wantWake ? 'Tap to keep screen on' : 'Screen can sleep');
+}
+$('#wake').addEventListener('click', e => {
+  e.stopPropagation();
+  wantWake = !(wantWake && wakeLock);
+  try { localStorage.setItem('bbq.wake', wantWake ? '1' : '0'); } catch {}
+  syncWake();
+});
+document.addEventListener('visibilitychange', syncWake);
+document.addEventListener('pointerup', () => { if (wantWake && !wakeLock) syncWake(); });
+syncWake();
+
+/* ---------------- session: export + reset ---------------- */
+let sessionStart = null;
+function renderSession() {
+  if (sessionStart == null) return;
+  const d = new Date(sessionStart * 1000), today = d.toDateString() === new Date().toDateString();
+  const when = (today ? '' : d.toLocaleDateString([], {weekday: 'short', month: 'short', day: 'numeric'}) + ' ') + hhmm(sessionStart);
+  $('#sessionInfo').textContent = `Session started ${when} · ${fmtDur(Math.max(0, Date.now() / 1000 - sessionStart))} ago`;
+}
+$('#exportBtn').addEventListener('click', async () => {
+  const btn = $('#exportBtn');
+  btn.disabled = true;
+  try {
+    const r = await fetchT('api/export?units=' + (cfg ? cfg.units : 'F'), {}, 30000);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const name = (/filename="([^"]+)"/.exec(r.headers.get('Content-Disposition') || '') || [])[1] || 'smokedat.csv';
+    // iPhone: the share sheet can save to Files, AirDrop it or mail it. Elsewhere: a normal download.
+    const file = new File([blob], name, {type: 'text/csv'});
+    if (isIOS && navigator.canShare && navigator.canShare({files: [file]})) {
+      try { await navigator.share({files: [file]}); return; }
+      catch (e) { if (e.name === 'AbortError') return; }  // otherwise fall through to a download
+    }
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } catch (e) { alert('Export failed: ' + e.message); }
+  finally { btn.disabled = false; }
+});
+$('#resetBtn').addEventListener('click', async () => {
+  if (!confirm('Start a new session?\n\nThe chart, time-to-goal estimates and recent alerts start fresh, and readings go to a new log file. ' +
+               'Tap Export CSV first if you want a copy of this session. Earlier log files stay in the logs folder.')) return;
+  try { await api('api/session/reset', {}); poll(true); }
+  catch (e) { alert('Could not start a new session: ' + e.message); }
+});
+
+/* ---------------- polling ---------------- */
+const ago = s => s < 60 ? `${Math.round(s)}s` : fmtDur(s);
+function renderStatus() {
+  const dot = $('#dot'), st = $('#status');
+  const offline = Date.now() - lastOk > 8000;
+  document.body.classList.toggle('offline', offline);
+  if (offline) {
+    dot.className = 'dot';
+    st.textContent = 'Bridge unreachable' + (lastOk ? ` · last update ${ago((Date.now() - lastOk) / 1000)} ago` : '');
+    return;
+  }
+  const age = server.last_data ? Math.round(server.now - server.last_data) : null;
+  const live = server.connected && age != null && age < 10;
+  dot.className = 'dot' + (live ? ' on' : '');
+  st.textContent = live ? 'Live' : (server.status || 'Waiting') + (age != null ? ` · last reading ${ago(age)} ago` : '');
+}
+
+async function poll(once) {
+  try {
+    const s = await api('api/state?since=' + lastT);
+    server = s; lastOk = Date.now();
+    const first = !cfg;
+    const remoteSig = JSON.stringify(s.config);
+    if (first || (JSON.stringify(cfg) !== remoteSig)) {
+      cfg = s.config;
+      if (!formDirty && !document.activeElement?.closest('#presets')) renderPresets();
+      if (first || document.activeElement?.closest('section') == null) renderNotify();
+      setPressed('#units', 'u', cfg.units);
+    }
+    temps = s.temps;
+    if (s.session && s.session.start !== sessionStart) {
+      if (sessionStart != null) hist = [];  // a new session was started (here or on another device)
+      sessionStart = s.session.start;
+    }
+    // Only take rows that are new and in this session (an overlapping poll could repeat some).
+    const fresh = s.history.filter(h => h[0] > lastT && h[0] >= sessionStart);
+    if (fresh.length) {
+      hist.push(...fresh);
+      lastT = hist[hist.length - 1][0];
+      const cutoff = s.now - 86400;
+      if (hist[0][0] < cutoff) hist = hist.filter(h => h[0] >= cutoff);
+    }
+    renderSession();
+    updateCards(); renderTabs(); renderAlerts(s.alerts); renderAlarm(s.active_alarms || []); draw();
+  } catch (e) { /* shown via status */ }
+  renderStatus();
+  if (!once) setTimeout(poll, 2000);
+}
+
+buildCards();
+renderRange();
+poll();
+setInterval(renderStatus, 1000);  // keeps the status honest even while a request is outstanding
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') poll(true); });
+</script>
+</body>
+</html>
